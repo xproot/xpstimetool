@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32819.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xpstimetool", "xpstimetool\xpstimetool.csproj", "{549E732C-B6D6-460C-96E2-DEB3A5967910}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{549E732C-B6D6-460C-96E2-DEB3A5967910}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{549E732C-B6D6-460C-96E2-DEB3A5967910}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{549E732C-B6D6-460C-96E2-DEB3A5967910}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{549E732C-B6D6-460C-96E2-DEB3A5967910}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ECEDA192-F3FD-4D40-948B-EFA4D61289A5}
+	EndGlobalSection
+EndGlobal
