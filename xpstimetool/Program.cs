@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Security.Principal;
 using System.Text;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,6 +55,28 @@ namespace xpstimetool
             Console.ResetColor();
         }
 
+        static bool WarningAreYouSure(String msg = "This action might be destructive.")
+        {
+            bool _return = false;
+            WriteColorLine("WARNING!", ConsoleColor.Red, ConsoleColor.Yellow);
+            WriteColorLine(msg, ConsoleColor.Yellow);
+            Console.WriteLine("Are you sure you want to continue? (y/N)");
+            Console.Write(": ");
+            ConsoleKey _k = Console.ReadKey().Key;
+            switch (_k)
+            {
+                case ConsoleKey.Y:
+                    WriteColorLine(" Continuing.", ConsoleColor.Yellow);
+                    _return = true;
+                    break;
+
+                default:
+                    WriteColorLine(" Not continuing.", ConsoleColor.Green);
+                    break;
+            }
+            return _return;
+        }
+
         static void PressAnyKey(String msg = "Press any key to continue. ")
         {
             Console.Write(msg);
@@ -70,7 +93,6 @@ namespace xpstimetool
             Console.WriteLine("2) Set the Date.");
             Console.WriteLine("3) Get the date from an NTP server.");
             Console.WriteLine("0) Exit.");
-            Console.WriteLine();
             Console.Write(": ");
             ConsoleKey _k = Console.ReadKey().Key;
             Console.WriteLine();
@@ -103,13 +125,55 @@ namespace xpstimetool
                     Console.WriteLine("1) Set manually.");
                     Console.WriteLine("2) Sync with NTP.");
                     Console.WriteLine("0) Go back.");
+                    Console.Write(": ");
                     switch (Console.ReadKey().Key)
                     {
                         case ConsoleKey.D1:
-                            SetManualDate();
+                            Console.WriteLine();
+                            
                             break;
 
                         case ConsoleKey.D2:
+                            Console.WriteLine();
+                            Console.WriteLine("Do you want to use your own NTP server? (y/N)");
+                            Console.Write("(default: time.windows.com): ");
+                            switch (Console.ReadKey().Key)
+                            {
+                                case ConsoleKey.Y:
+                                    Console.WriteLine();
+                                    Console.WriteLine("Please type your custom NTP server.");
+                                    string _server = Console.ReadLine();
+                                    if (WarningAreYouSure("After you press Y, this program will query the server and set the system time to whatever it brings back." + Environment.NewLine + "This has the potential to screw up applications and other stuff."))
+                                    {
+                                        if (_server == null)
+                                        {
+                                            WriteColor("Server is empty! ", ConsoleColor.Red);
+                                            Console.WriteLine("Using default...");
+                                            _server = "time.windows.com";
+                                        }
+                                        Console.WriteLine("Querying...");
+                                        DateTime? ntpTime = GetNetworkTime(_server);
+                                        if (ntpTime == null)
+                                        {
+                                            return;
+                                        }
+                                        WriteColorLine(ntpTime.ToString(), ConsoleColor.Green);
+                                    }
+                                    break;
+
+                                default:
+                                    if (WarningAreYouSure("After you press Y, this program will query the server and set the system time to whatever it brings back." + Environment.NewLine + "This has the potential to screw up applications and other stuff."))
+                                    {
+                                        Console.WriteLine(" Querying...");
+                                        DateTime? _ntpTime = GetNetworkTime();
+                                        if (_ntpTime == null)
+                                        {
+                                            return;
+                                        }
+                                        WriteColorLine(_ntpTime.ToString(), ConsoleColor.Green);
+                                    }
+                                    break;
+                            }
                             break;
 
                         default:
@@ -133,6 +197,7 @@ namespace xpstimetool
                                 Console.WriteLine("Using default...");
                                 _server = "time.windows.com";
                             }
+                            Console.WriteLine("Querying...");
                             DateTime? ntpTime = GetNetworkTime(_server);
                             if (ntpTime == null)
                             {
@@ -143,7 +208,7 @@ namespace xpstimetool
                             break;
 
                         default:
-                            Console.WriteLine("Querying...");
+                            Console.WriteLine(" Querying...");
                             DateTime? _ntpTime = GetNetworkTime();
                             if (_ntpTime == null)
                             {
@@ -158,11 +223,6 @@ namespace xpstimetool
                     WriteColor('\r' + "Please choose a valid option.", ConsoleColor.Red);
                     break;
             }
-        }
-
-        static void SetManualDate()
-        {
-            
         }
 
         public static DateTime? GetNetworkTime(string ntpServer = "time.windows.com")
@@ -237,6 +297,8 @@ namespace xpstimetool
             Console.WriteLine("========================");
             while (run)
                 OptionChooser();
+            Console.WriteLine("Thanks for using my application!" + Environment.NewLine + "Want to give it a spin or add your own contributions? If so then contribute in ");
+            WriteColor("https://github.com/xproot/xpstimetool", ConsoleColor.Blue);
         }
     }
 }
