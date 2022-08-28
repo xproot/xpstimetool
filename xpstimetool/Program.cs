@@ -17,6 +17,7 @@ namespace xpstimetool
         public static extern bool SetSystemTime(ref SYSTEMTIME st);
 
         public static string newDate = null;
+        public static bool run = true;
 
         public struct SYSTEMTIME
         {
@@ -50,6 +51,51 @@ namespace xpstimetool
             Console.WriteLine(line);
             Console.ResetColor();
         }
+
+        static void PressAnyKey(String msg = "Press any key to continue. ")
+        {
+            Console.Write(msg);
+            Console.ReadKey();
+            Console.WriteLine();
+        }
+
+        static void OptionChooser()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Please choose an option.");
+            Console.WriteLine("1) Show the Date.");
+            Console.WriteLine("0) Exit.");
+            Console.WriteLine();
+            Console.Write(": ");
+            ConsoleKey _k = Console.ReadKey().Key;
+            Console.WriteLine();
+            Console.WriteLine();
+            switch (_k)
+            {
+                case ConsoleKey.D0:
+                    run = false;
+                    break;
+
+                case ConsoleKey.D1:
+                    int _days = 365;
+                    if (DateTime.IsLeapYear(DateTime.Now.Year))
+                        _days = 366;
+
+                    WriteColorLine("Current Date and Time:", ConsoleColor.Blue);
+                    Console.WriteLine(DateTime.Now.ToString());
+                    WriteColorLine("Remaining days in year:", ConsoleColor.Blue);
+                    Console.WriteLine($"{_days - DateTime.Now.DayOfYear} days left. (Day {DateTime.Now.DayOfYear})");
+                    WriteColorLine("Leap year:", ConsoleColor.Blue);
+                    Console.WriteLine($"{DateTime.IsLeapYear(DateTime.Now.Year).ToString()} ({_days.ToString()} days)");
+                    Console.WriteLine();
+                    PressAnyKey();
+                    break;
+
+                default:
+                    WriteColor('\r' + "Please choose a valid option.", ConsoleColor.Red);
+                    break;
+            }
+        }
         #endregion
 
         static void Main(string[] args)
@@ -63,15 +109,8 @@ namespace xpstimetool
             Console.WriteLine("---");
             Console.WriteLine($"Current date is {DateTime.Today.ToLongDateString()}");
             Console.WriteLine("========================");
-            Console.WriteLine();
-            WriteColorLine("Please choose an option.", ConsoleColor.Red);
-            Console.WriteLine("1) Show the Date.");
-            Console.WriteLine(Console.ReadKey().ToString());
-            while (true)
-            {
-                Console.Write('\r' + $"{DateTime.Now.ToString()}    ");
-                Thread.Sleep(100);
-            }
+            while (run)
+                OptionChooser();
         }
     }
 }
