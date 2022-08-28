@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Sockets;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using System.Security.Principal;
@@ -62,8 +64,11 @@ namespace xpstimetool
         static void OptionChooser()
         {
             Console.WriteLine();
+            Console.WriteLine("--Main Menu--");
             Console.WriteLine("Please choose an option.");
             Console.WriteLine("1) Show the Date.");
+            Console.WriteLine("2) Set the Date.");
+            Console.WriteLine("3) Get the date from an NTP server.");
             Console.WriteLine("0) Exit.");
             Console.WriteLine();
             Console.Write(": ");
@@ -83,6 +88,8 @@ namespace xpstimetool
 
                     WriteColorLine("Current Date and Time:", ConsoleColor.Blue);
                     Console.WriteLine(DateTime.Now.ToString());
+                    WriteColorLine("UTC Date and Time:", ConsoleColor.Blue);
+                    Console.WriteLine(DateTime.UtcNow.ToString());
                     WriteColorLine("Remaining days in year:", ConsoleColor.Blue);
                     Console.WriteLine($"{_days - DateTime.Now.DayOfYear} days left. (Day {DateTime.Now.DayOfYear})");
                     WriteColorLine("Leap year:", ConsoleColor.Blue);
@@ -91,10 +98,129 @@ namespace xpstimetool
                     PressAnyKey();
                     break;
 
+                case ConsoleKey.D2:
+                    Console.WriteLine("Do you want to set your own date or query a NTP server?.");
+                    Console.WriteLine("1) Set manually.");
+                    Console.WriteLine("2) Sync with NTP.");
+                    Console.WriteLine("0) Go back.");
+                    switch (Console.ReadKey().Key)
+                    {
+                        case ConsoleKey.D1:
+                            SetManualDate();
+                            break;
+
+                        case ConsoleKey.D2:
+                            break;
+
+                        default:
+                            break;
+                    }
+                    Console.WriteLine();
+                    break;
+
+                case ConsoleKey.D3:
+                    Console.WriteLine("Do you want to use your own NTP server? (y/N)");
+                    Console.Write("(default: time.windows.com): ");
+                    switch (Console.ReadKey().Key)
+                    {
+                        case ConsoleKey.Y:
+                            Console.WriteLine();
+                            Console.WriteLine("Please type your custom NTP server.");
+                            string _server = Console.ReadLine();
+                            if (_server == null)
+                            {
+                                WriteColor("Server is empty! ", ConsoleColor.Red);
+                                Console.WriteLine("Using default...");
+                                _server = "time.windows.com";
+                            }
+                            DateTime? ntpTime = GetNetworkTime(_server);
+                            if (ntpTime == null)
+                            {
+                                return;
+                            }
+                            WriteColorLine(ntpTime.ToString(), ConsoleColor.Green);
+
+                            break;
+
+                        default:
+                            Console.WriteLine("Querying...");
+                            DateTime? _ntpTime = GetNetworkTime();
+                            if (_ntpTime == null)
+                            {
+                                return;
+                            }
+                            WriteColorLine(_ntpTime.ToString(), ConsoleColor.Green);
+                            break;
+                    }
+                    break;
+
                 default:
                     WriteColor('\r' + "Please choose a valid option.", ConsoleColor.Red);
                     break;
             }
+        }
+
+        static void SetManualDate()
+        {
+            
+        }
+
+        public static DateTime? GetNetworkTime(string ntpServer = "time.windows.com")
+        {
+            var ntpData = new byte[48];
+            ntpData[0] = 0x1B;
+            var addresses = Dns.GetHostEntry(ntpServer).AddressList;
+            var ipEndPoint = new IPEndPoint(addresses[0], 123);
+            using (var _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+            {
+                try
+                {
+                    _socket.Connect(ipEndPoint);
+                    _socket.ReceiveTimeout = 5000;
+                    _socket.Send(ntpData);
+                    _socket.Receive(ntpData);
+                    _socket.Close();
+                }
+                catch
+                {
+                    WriteColorLine("An error has occured while connecting to the server.", ConsoleColor.Red);
+                    Console.WriteLine("Trying again...");
+                    using (var __socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp))
+                    {
+                        try
+                        {
+                            __socket.Connect(ipEndPoint);
+                            __socket.ReceiveTimeout = 5000;
+                            __socket.Send(ntpData);
+                            __socket.Receive(ntpData);
+                            __socket.Close();
+                        }
+                        catch
+                        {
+                            WriteColorLine("An error has occured while connecting to the server.", ConsoleColor.Red);
+                            Console.WriteLine("No more tries...");
+                            return null;
+                        }
+                    }
+                }
+            }
+            const byte serverReplyTime = 40;
+            ulong intPart = BitConverter.ToUInt32(ntpData, serverReplyTime);
+            ulong fractPart = BitConverter.ToUInt32(ntpData, serverReplyTime + 4);
+            intPart = SwapEndianness(intPart);
+            fractPart = SwapEndianness(fractPart);
+            var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
+            var networkDateTime = (new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc)).AddMilliseconds((long)milliseconds);
+
+            return networkDateTime.ToLocalTime();
+        }
+
+        static uint SwapEndianness(ulong x)
+        {
+            return (uint)(((x & 0x000000ff) << 24) +
+                           ((x & 0x0000ff00) << 8) +
+                           ((x & 0x00ff0000) >> 8) +
+                           ((x & 0xff000000) >> 24));
         }
         #endregion
 
