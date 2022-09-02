@@ -18,8 +18,6 @@ namespace xpstimetool
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool SetSystemTime(ref SYSTEMTIME st);
-
-        public static string newDate = null;
         public static bool run = true;
 
         public struct SYSTEMTIME
@@ -130,7 +128,35 @@ namespace xpstimetool
                     {
                         case ConsoleKey.D1:
                             Console.WriteLine();
-                            
+                            if (WarningAreYouSure("After you press Y, this program will ask you for a date, and if it's valid it will be set to the system time." + Environment.NewLine + "This has the potential to screw up applications and other stuff."))
+                            {
+                                Console.WriteLine($"Please write a Date in your date format. (Example: {DateTime.Parse("13/03/2008 7:25:12 PM", new CultureInfo("fr-FR"))})");
+                                string _date = Console.ReadLine();
+                                DateTime? _dt = null;
+                                try
+                                {
+                                    _dt = DateTime.Parse(_date);
+                                } catch
+                                {
+                                    WriteColor("Failed! ", ConsoleColor.Red);
+                                    Console.WriteLine("Unparsable date.");
+                                }
+                                if (_dt != null)
+                                {
+                                    if (SetDate((DateTime)_dt))
+                                    {
+                                        WriteColor("Success! ", ConsoleColor.Green);
+                                        Console.WriteLine($"Your new system date is {DateTime.Now.ToString()}");
+                                    }
+                                    else
+                                    {
+                                        WriteColor("Failed! ", ConsoleColor.Red);
+                                        Console.WriteLine($"Your system date may have changed: {DateTime.Now.ToString()}");
+                                    }
+                                }
+
+                                Console.WriteLine();
+                            }
                             break;
 
                         case ConsoleKey.D2:
@@ -157,11 +183,20 @@ namespace xpstimetool
                                         {
                                             return;
                                         }
-                                        WriteColorLine(ntpTime.ToString(), ConsoleColor.Green);
+                                        if (SetDate((DateTime)ntpTime))
+                                        {
+                                            WriteColor("Success! ", ConsoleColor.Green);
+                                            Console.WriteLine($"Your new system date is {DateTime.Now.ToString()}");
+                                        } else
+                                        {
+                                            WriteColor("Failed! ", ConsoleColor.Red);
+                                            Console.WriteLine($"Your system date may have changed: {DateTime.Now.ToString()}");
+                                        }
                                     }
                                     break;
 
                                 default:
+                                    Console.WriteLine();
                                     if (WarningAreYouSure("After you press Y, this program will query the server and set the system time to whatever it brings back." + Environment.NewLine + "This has the potential to screw up applications and other stuff."))
                                     {
                                         Console.WriteLine(" Querying...");
@@ -170,7 +205,16 @@ namespace xpstimetool
                                         {
                                             return;
                                         }
-                                        WriteColorLine(_ntpTime.ToString(), ConsoleColor.Green);
+                                        if (SetDate((DateTime)_ntpTime))
+                                        {
+                                            WriteColor("Success! ", ConsoleColor.Green);
+                                            Console.WriteLine($"Your new system date is {DateTime.Now.ToString()}");
+                                        }
+                                        else
+                                        {
+                                            WriteColor("Failed! ", ConsoleColor.Red);
+                                            Console.WriteLine($"Your system date may have changed: {DateTime.Now.ToString()}");
+                                        }
                                     }
                                     break;
                             }
@@ -208,7 +252,8 @@ namespace xpstimetool
                             break;
 
                         default:
-                            Console.WriteLine(" Querying...");
+                            Console.WriteLine();
+                            Console.WriteLine("Querying...");
                             DateTime? _ntpTime = GetNetworkTime();
                             if (_ntpTime == null)
                             {
@@ -281,6 +326,33 @@ namespace xpstimetool
                            ((x & 0x0000ff00) << 8) +
                            ((x & 0x00ff0000) >> 8) +
                            ((x & 0xff000000) >> 24));
+        }
+
+        static bool SetDate(DateTime newDate, bool utc = false)
+        {
+            if (!utc)
+                newDate = newDate.ToUniversalTime();
+            DateTime _before = DateTime.Now;
+            SYSTEMTIME st = new SYSTEMTIME();
+            st.wYear = (short)newDate.Year;
+            st.wMonth = (short)newDate.Month;
+            st.wDay = (short)newDate.Day;
+            st.wHour = (short)newDate.Hour;
+            st.wMinute = (short)newDate.Minute;
+            st.wSecond = (short)newDate.Second;
+
+            try
+            {
+                SetSystemTime(ref st);
+            } catch 
+            {
+                return false;
+            }
+
+            if (_before == DateTime.Now)
+                return false;
+
+            return true;
         }
         #endregion
 
