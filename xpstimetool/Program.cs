@@ -1,16 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
 using System.Net.Sockets;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Security.Permissions;
-using System.Security.Principal;
-using System.Text;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace xpstimetool
 {
