@@ -348,8 +348,38 @@ namespace xpstimetool
         }
         #endregion
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
+            if (args.Length > 0 && args[0].ToLower() == "/ntp")
+            {
+                Console.WriteLine(" Querying...");
+                DateTime? _ntpTime = null;
+                if (args.Length > 1 && !String.IsNullOrWhiteSpace(args[1]))
+                {
+                    _ntpTime = GetNetworkTime(args[1]);
+                }
+                else
+                {
+                    _ntpTime = GetNetworkTime();
+                }
+                if (_ntpTime == null)
+                {
+                    WriteColor("Failed! ", ConsoleColor.Red);
+                    return 1;
+                }
+                if (SetDate((DateTime)_ntpTime))
+                {
+                    WriteColor("Success! ", ConsoleColor.Green);
+                    Console.WriteLine($"Your new system date is {DateTime.Now.ToString()}");
+                    return 0;
+                }
+                else
+                {
+                    WriteColor("Failed! ", ConsoleColor.Red);
+                    Console.WriteLine($"Your system date may have changed: {DateTime.Now.ToString()}");
+                    return 1;
+                }
+            }
             Console.WriteLine();
             Console.WriteLine("========================");
             WriteColor("xp", ConsoleColor.Green); WriteColor("root", ConsoleColor.Red); Console.WriteLine("'s Time Tool");
@@ -363,6 +393,7 @@ namespace xpstimetool
                 OptionChooser();
             Console.WriteLine("Thanks for using my application!" + Environment.NewLine + "Want to give it a spin or add your own contributions? If so then contribute in ");
             WriteColor("https://github.com/xproot/xpstimetool", ConsoleColor.Blue);
+            return 0;
         }
     }
 }
